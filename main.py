@@ -1,4 +1,5 @@
 import asyncio
+import os
 import psycopg2
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageActionChatAddUser
@@ -14,7 +15,7 @@ DATABASE_URL = "postgresql://postgres:SFLJhDjQOmxLWRKojEEczqwIqPMKngZb@postgres.
 
 client = TelegramClient("bot_session", api_id, api_hash).start(bot_token=bot_token)
 
-# ---------- POSTGRES ----------
+# ---------- POSTGRES CONNECTION ----------
 try:
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
@@ -23,6 +24,7 @@ except Exception as e:
     print("❌ Помилка підключення до бази:", e)
     import sys; sys.exit(1)
 
+# Створюємо таблицю allowed_users
 try:
     cur.execute("""
     CREATE TABLE IF NOT EXISTS allowed_users (
@@ -104,7 +106,7 @@ async def message_handler(event):
             event.chat_id,
             f"{mention}\n\n"
             f"<b>Публікація у цій групі повністю безкоштовна.</b>\n\n"
-            f"Щоб отримати можливість писати, додайте трьох рекрутерів,\n"
+            f"Щоб отримати можливість писати, додайте трьох рекрутерів, "
             f"шукачів роботи або людей, яким буде цікава ця група.\n\n"
             f"Після додавання трьох людей доступ до групи відкриється автоматично.",
             parse_mode="html"
@@ -115,7 +117,6 @@ async def message_handler(event):
 
     except Exception as e:
         print("❌ message_handler:", e)
-
 
 # ---------- INVITE TRACK ----------
 @client.on(events.ChatAction)
@@ -175,7 +176,7 @@ async def invite_handler(event):
 
         total = invite_counter.get(username, 0)
 
-        print(f"[INVITE] {username} -> {total}")
+        print(f"[INVITE] {username} -> total: {total}")
 
         if total >= 3:
 
@@ -197,7 +198,6 @@ async def invite_handler(event):
 
     except Exception as e:
         print("❌ invite_handler:", e)
-
 
 # ---------- MAIN ----------
 async def main():
