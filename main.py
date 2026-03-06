@@ -9,7 +9,7 @@ api_id = "22156214"
 api_hash = "8a3b615b4789cd6fb0758beb440eec9c"
 bot_token = "8735498850:AAFE9El0HVeLiW10K_-lDLK70JYGEZagljo"
 
-chats = ["@robotavr_lviv", "@robotavr_chernigiv"]
+chat = ["@robotavr_lviv", "@robotavr_chernigiv"]
 DATABASE_URL = "postgresql://postgres:SFLJhDjQOmxLWRKojEEczqwIqPMKngZb@postgres.railway.internal:5432/railway?sslmode=require"
 
 client = TelegramClient("bot_session", api_id, api_hash).start(bot_token=bot_token)
@@ -190,4 +190,5 @@ async def main():
         print(f"❌ Помилка у run_until_disconnected: {e}")
 
 client.loop.run_until_complete(main())
+
 
