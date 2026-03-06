@@ -9,7 +9,8 @@ api_id = "22156214"
 api_hash = "8a3b615b4789cd6fb0758beb440eec9c"
 bot_token = "8735498850:AAFE9El0HVeLiW10K_-lDLK70JYGEZagljo"
 
-chat = ["@robotavr_lviv", "@robotavr_chernigiv"]
+chats = ["@robotavr_lviv", "@robotavr_chernigiv"]
+
 DATABASE_URL = "postgresql://postgres:SFLJhDjQOmxLWRKojEEczqwIqPMKngZb@postgres.railway.internal:5432/railway?sslmode=require"
 
 client = TelegramClient("bot_session", api_id, api_hash).start(bot_token=bot_token)
@@ -68,7 +69,7 @@ def add_allowed(username):
 allowed_users = load_allowed()
 
 # ---------- MESSAGE CONTROL ----------
-@client.on(events.NewMessage(chats=chat))
+@client.on(events.NewMessage(chats=chats))
 async def message_handler(event):
     try:
         sender = await event.get_sender()
@@ -79,7 +80,6 @@ async def message_handler(event):
         username = sender.username.lower() if sender.username else str(sender.id)
         print(f"🔹 Нове повідомлення від {username}: {event.text}")
 
-        # Завантажуємо актуальні allowed_users з бази
         current_allowed = load_allowed()
         if username in current_allowed:
             print(f"🔹 {username} вже має доступ, нічого не робимо")
@@ -97,7 +97,7 @@ async def message_handler(event):
 
         mention = f"@{sender.username}" if sender.username else f"<b>{sender.first_name}</b>"
         msg = await client.send_message(
-            chat,
+            event.chat_id,
             f"{mention}\n\n"
             f"<b>Публікація у цій групі повністю безкоштовна.</b>\n\n"
             f"Щоб отримати можливість писати, додайте трьох рекрутерів, "
@@ -105,6 +105,7 @@ async def message_handler(event):
             f"Після додавання трьох людей доступ до групи відкриється автоматично.",
             parse_mode="html"
         )
+
         print(f"🔹 Надіслано повідомлення про умову для {username}")
         await asyncio.sleep(10)
         await msg.delete()
@@ -114,7 +115,7 @@ async def message_handler(event):
         print(f"❌ Помилка у message_handler: {e}")
 
 # ---------- INVITE TRACK ----------
-@client.on(events.ChatAction(chats=chat))
+@client.on(events.ChatAction(chats=chats))
 async def invite_handler(event):
     try:
         if not event.action_message:
@@ -151,6 +152,7 @@ async def invite_handler(event):
         for added_id in added_ids:
             if added_id == inviter.id:
                 continue
+
             pair = (inviter.id, added_id)
             if pair in counted_pairs:
                 continue
@@ -167,12 +169,13 @@ async def invite_handler(event):
 
             mention = f"@{inviter.username}" if inviter.username else f"<b>{inviter.first_name}</b>"
             msg = await client.send_message(
-                chat,
+                event.chat_id,
                 f"{mention}\n\n"
                 f"<b>Доступ відкрито.</b>\n"
                 f"Тепер ви можете писати в групі без обмежень.",
                 parse_mode="html"
             )
+
             print(f"🔹 Доступ відкрито для {username}")
             await asyncio.sleep(10)
             await msg.delete()
@@ -190,5 +193,3 @@ async def main():
         print(f"❌ Помилка у run_until_disconnected: {e}")
 
 client.loop.run_until_complete(main())
-
-
