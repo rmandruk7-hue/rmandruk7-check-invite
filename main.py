@@ -1,5 +1,4 @@
 import asyncio
-import os
 import psycopg2
 from telethon import TelegramClient, events
 from telethon.tl.types import MessageActionChatAddUser
@@ -24,7 +23,7 @@ except Exception as e:
     print("❌ Помилка підключення до бази:", e)
     import sys; sys.exit(1)
 
-# Створюємо таблицю allowed_users
+# ---------- CREATE TABLE ----------
 try:
     cur.execute("""
     CREATE TABLE IF NOT EXISTS allowed_users (
@@ -49,7 +48,8 @@ def load_allowed():
         cur.execute("SELECT username FROM allowed_users")
         users = set(row[0].lower() for row in cur.fetchall())
         return users
-    except:
+    except Exception as e:
+        print("DB load error:", e)
         return set()
 
 def add_allowed(username):
@@ -60,8 +60,8 @@ def add_allowed(username):
             ON CONFLICT (username) DO NOTHING
         """, (username.lower(),))
         conn.commit()
-    except:
-        pass
+    except Exception as e:
+        print("DB insert error:", e)
 
 allowed_users = load_allowed()
 
@@ -86,6 +86,8 @@ async def message_handler(event):
 
         username = sender.username.lower() if sender.username else str(sender.id)
 
+        print(f"🔹 Message from {username}: {event.text}")
+
         current_allowed = load_allowed()
 
         if username in current_allowed:
@@ -106,7 +108,7 @@ async def message_handler(event):
             event.chat_id,
             f"{mention}\n\n"
             f"<b>Публікація у цій групі повністю безкоштовна.</b>\n\n"
-            f"Щоб отримати можливість писати, додайте трьох рекрутерів, "
+            f"Щоб отримати можливість писати, додайте трьох рекрутерів,\n"
             f"шукачів роботи або людей, яким буде цікава ця група.\n\n"
             f"Після додавання трьох людей доступ до групи відкриється автоматично.",
             parse_mode="html"
@@ -160,7 +162,9 @@ async def invite_handler(event):
         if username in current_allowed:
             return
 
-        for added_id in action.users:
+        added_ids = action.users
+
+        for added_id in added_ids:
 
             if added_id == inviter.id:
                 continue
