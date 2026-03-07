@@ -45,57 +45,74 @@ counted_pairs = set()
 warning_cooldown = {}
 
 # ---------- DB FUNCTIONS ----------
+
 def load_allowed():
     try:
         cur.execute("SELECT username FROM allowed_users")
-        users = set(row[0].lower() for row in cur.fetchall())
-        print(f"✅ Завантажено allowed_users з бази: {users}")
+        rows = cur.fetchall()
+
+        users = set()
+
+        for r in rows:
+            if r[0]:
+                users.add(r[0].lower())
+
         return users
+
     except Exception as e:
         print("❌ Помилка при load_allowed:", e)
         return set()
 
+
 def add_allowed(username):
     try:
-        cur.execute("""
-        INSERT INTO allowed_users (username)
-        VALUES (%s)
-        ON CONFLICT (username) DO NOTHING
-        """, (username.lower(),))
+        cur.execute(
+            """
+            INSERT INTO allowed_users (username)
+            VALUES (%s)
+            ON CONFLICT (username) DO NOTHING
+            """,
+            (username.lower(),)
+        )
+
         conn.commit()
+
         print(f"✅ Додано користувача в базу: {username}")
+
     except Exception as e:
         print(f"❌ Помилка при додаванні користувача {username}: {e}")
+
 
 allowed_users = load_allowed()
 
 # ---------- MESSAGE CONTROL ----------
+
 @client.on(events.NewMessage(chats=chat_username))
 async def message_handler(event):
     try:
+
         sender = await event.get_sender()
 
         if not sender or sender.bot:
-            print("🔹 Повідомлення від бота або пустий sender, пропускаємо")
             return
 
         username = sender.username.lower() if sender.username else str(sender.id)
 
         print(f"🔹 Нове повідомлення від {username}: {event.text}")
 
+        # 🔹 беремо allowed_users прямо з бази
         current_allowed = load_allowed()
 
+        # 🔹 якщо юзер дозволений — нічого не робимо
         if username in current_allowed:
-            print(f"🔹 {username} вже має доступ, нічого не робимо")
             return
 
+        # 🔹 якщо ні — видаляємо повідомлення
         await event.delete()
-        print(f"🔹 Повідомлення {username} видалено")
 
         now = asyncio.get_event_loop().time()
 
         if username in warning_cooldown and now - warning_cooldown[username] < 10:
-            print(f"🔹 {username} у cooldown, пропускаємо")
             return
 
         warning_cooldown[username] = now
@@ -112,45 +129,37 @@ async def message_handler(event):
             parse_mode="html"
         )
 
-        print(f"🔹 Надіслано повідомлення про умову для {username}")
-
         await asyncio.sleep(10)
         await msg.delete()
-
-        print(f"🔹 Повідомлення про умову для {username} видалено")
 
     except Exception as e:
         print(f"❌ Помилка у message_handler: {e}")
 
 # ---------- INVITE TRACK ----------
+
 @client.on(events.ChatAction(chats=chat_username))
 async def invite_handler(event):
     try:
 
         if not event.action_message:
-            print("🔹 action_message пустий, пропускаємо")
             return
 
         action = event.action_message.action
 
         if not isinstance(action, MessageActionChatAddUser):
-            print("🔹 Це не додавання юзерів, пропускаємо")
             return
 
         inviter_id = event.action_message.from_id
 
         if not inviter_id:
-            print("🔹 inviter_id пустий, пропускаємо")
             return
 
         if inviter_id in action.users:
-            print("🔹 inviter_id у списку доданих, пропускаємо")
             return
 
         inviter = await client.get_entity(inviter_id)
 
         if not inviter or inviter.bot:
-            print("🔹 inviter бот або пустий, пропускаємо")
             return
 
         username = inviter.username.lower() if inviter.username else str(inviter.id)
@@ -158,7 +167,6 @@ async def invite_handler(event):
         current_allowed = load_allowed()
 
         if username in current_allowed:
-            print(f"🔹 {username} вже має доступ, пропускаємо")
             return
 
         for added_id in action.users:
@@ -181,7 +189,6 @@ async def invite_handler(event):
 
         if total >= 3:
 
-            allowed_users.add(username)
             add_allowed(username)
 
             mention = f"@{inviter.username}" if inviter.username else f"<b>{inviter.first_name}</b>"
@@ -194,24 +201,19 @@ async def invite_handler(event):
                 parse_mode="html"
             )
 
-            print(f"🔹 Доступ відкрито для {username}")
-
             await asyncio.sleep(10)
             await msg.delete()
-
-            print(f"🔹 Повідомлення про доступ для {username} видалено")
 
     except Exception as e:
         print(f"❌ Помилка у invite_handler: {e}")
 
 # ---------- MAIN ----------
+
 async def main():
     print("BOT WORKING ✅")
 
-    try:
-        await client.run_until_disconnected()
-    except Exception as e:
-        print(f"❌ Помилка у run_until_disconnected: {e}")
+    await client.run_until_disconnected()
+
 
 client.loop.run_until_complete(main())
 
