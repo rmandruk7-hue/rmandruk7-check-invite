@@ -9,7 +9,7 @@ api_id = "22156214"
 api_hash = "8a3b615b4789cd6fb0758beb440eec9c"
 bot_token = "8735498850:AAFE9El0HVeLiW10K_-lDLK70JYGEZagljo"
 
-chat = ["@robotavr_lviv", "@robotavr_chernigiv"]
+chat_username = "@robotavr_lviv"
 
 DATABASE_URL = "postgresql://postgres:SFLJhDjQOmxLWRKojEEczqwIqPMKngZb@postgres.railway.internal:5432/railway?sslmode=require"
 
@@ -25,7 +25,7 @@ except Exception as e:
     import sys
     sys.exit(1)
 
-# Створюємо таблицю allowed_users, якщо її нема
+# ---------- CREATE TABLE ----------
 try:
     cur.execute("""
     CREATE TABLE IF NOT EXISTS allowed_users (
@@ -70,7 +70,7 @@ def add_allowed(username):
 allowed_users = load_allowed()
 
 # ---------- MESSAGE CONTROL ----------
-@client.on(events.NewMessage(chats=chat))
+@client.on(events.NewMessage(chats=chat_username))
 async def message_handler(event):
     try:
         sender = await event.get_sender()
@@ -83,7 +83,6 @@ async def message_handler(event):
 
         print(f"🔹 Нове повідомлення від {username}: {event.text}")
 
-        # Завантажуємо актуальні allowed_users з бази
         current_allowed = load_allowed()
 
         if username in current_allowed:
@@ -104,7 +103,7 @@ async def message_handler(event):
         mention = f"@{sender.username}" if sender.username else f"<b>{sender.first_name}</b>"
 
         msg = await client.send_message(
-            chat,
+            chat_username,
             f"{mention}\n\n"
             f"<b>Публікація у цій групі повністю безкоштовна.</b>\n\n"
             f"Щоб отримати можливість писати, додайте трьох рекрутерів, "
@@ -124,7 +123,7 @@ async def message_handler(event):
         print(f"❌ Помилка у message_handler: {e}")
 
 # ---------- INVITE TRACK ----------
-@client.on(events.ChatAction(chats=chat))
+@client.on(events.ChatAction(chats=chat_username))
 async def invite_handler(event):
     try:
 
@@ -162,9 +161,7 @@ async def invite_handler(event):
             print(f"🔹 {username} вже має доступ, пропускаємо")
             return
 
-        added_ids = action.users
-
-        for added_id in added_ids:
+        for added_id in action.users:
 
             if added_id == inviter.id:
                 continue
@@ -190,7 +187,7 @@ async def invite_handler(event):
             mention = f"@{inviter.username}" if inviter.username else f"<b>{inviter.first_name}</b>"
 
             msg = await client.send_message(
-                chat,
+                chat_username,
                 f"{mention}\n\n"
                 f"<b>Доступ відкрито.</b>\n"
                 f"Тепер ви можете писати в групі без обмежень.",
@@ -217,3 +214,4 @@ async def main():
         print(f"❌ Помилка у run_until_disconnected: {e}")
 
 client.loop.run_until_complete(main())
+
