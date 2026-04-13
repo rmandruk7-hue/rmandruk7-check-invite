@@ -13,7 +13,7 @@ chat_username = "@robotavr_kyiv"
 
 DATABASE_URL = "postgresql://postgres:RQrprIunqRmZtDJlNYFUCBNExOtRsxqC@postgres.railway.internal:5432/railway"
 
-client = TelegramClient("bot_session", api_id, api_hash).start(bot_token=bot_token)
+client = TelegramClient("bot_session_new_1", api_id, api_hash).start(bot_token=bot_token)
 
 # ---------- POSTGRES CONNECTION ----------
 try:
