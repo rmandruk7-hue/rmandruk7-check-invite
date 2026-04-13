@@ -9,9 +9,9 @@ api_id = "22156214"
 api_hash = "8a3b615b4789cd6fb0758beb440eec9c"
 bot_token = "8735498850:AAFE9El0HVeLiW10K_-lDLK70JYGEZagljo"
 
-chat_username = "@robotavr_lviv"
+chat_username = "@robotavr_kyiv"
 
-DATABASE_URL = "postgresql://postgres:SFLJhDjQOmxLWRKojEEczqwIqPMKngZb@postgres.railway.internal:5432/railway?sslmode=require"
+DATABASE_URL = "postgresql://postgres:RQrprIunqRmZtDJlNYFUCBNExOtRsxqC@postgres.railway.internal:5432/railway"
 
 client = TelegramClient("bot_session", api_id, api_hash).start(bot_token=bot_token)
 
